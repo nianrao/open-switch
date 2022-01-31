@@ -111,6 +111,7 @@ architecture rtl of gmii_rcv is
   signal fifo_empty   : std_logic;
   signal fifo_dout    : std_logic_vector(fifo_din'length - 1 downto 0);
   signal fifo_rd      : std_logic := '0';
+  signal fifo_full    : std_logic;
 
 begin
 
@@ -146,7 +147,8 @@ begin
           end if;
 
         when others => -- IDLE --
-          if (gmii_rx_dv = '1' and gmii_rx_er = '0' and gmii_rx_din = C_PREAMBLE_BYTE) then
+          if (gmii_rx_dv = '1' and gmii_rx_er = '0' and
+            gmii_rx_din = C_PREAMBLE_BYTE and fifo_full = '0') then
             gmii_rx_state <= SFD;
           else
             gmii_rx_state <= IDLE;
@@ -202,7 +204,7 @@ begin
     dbiterr       => open,
     dout          => fifo_dout,
     empty         => fifo_empty,
-    full          => open,
+    full          => fifo_full,
     overflow      => open,
     prog_empty    => open,
     prog_full     => open,
