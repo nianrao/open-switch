@@ -20,6 +20,11 @@
 -- | Description
 -- +----------------------------------------------------------------------------
 -- +----------------------------------------------------------------------------
+-- | reset           | input     | 1-bit         | N/A         | active high |
+-- |----------------------------------------------------------------------------
+-- | Set signal to high to reset this module
+-- +----------------------------------------------------------------------------
+-- +----------------------------------------------------------------------------
 -- | gmii_rx_clk     | input     | 1-bit         | N/A         | rising_edge |
 -- |----------------------------------------------------------------------------
 -- | Clock of GMII RX interface running at 125MHz
@@ -77,6 +82,8 @@ use xpm.vcomponents.all;
 
 entity gmii_rcv is
   port (
+    reset : in std_logic;
+
     -- gmii rcv signals from PHY --
     gmii_rx_clk : in std_logic;
     gmii_rx_dv  : in std_logic;
@@ -116,44 +123,48 @@ architecture rtl of gmii_rcv is
 begin
 
   -- GMII receving state machine --
-  gmii_rx_fsm : process (gmii_rx_clk) is
+  gmii_rx_fsm : process (gmii_rx_clk, reset) is
   begin
-    if rising_edge(gmii_rx_clk) then
-      -- initialize signals --
-      sof     <= '0';
-      eof     <= '0';
-      valid   <= '0';
-      rx_data <= (others => '0');
+    -- initialize signals --
+    sof     <= '0';
+    eof     <= '0';
+    valid   <= '0';
+    rx_data <= (others => '0');
 
-      case gmii_rx_state is
-        when SFD =>
-          if gmii_rx_dv = '1' and gmii_rx_er = '0' and gmii_rx_din = C_SFD_BYTE then
-            gmii_rx_state <= DATA;
-            sof           <= '1';
-          elsif gmii_rx_dv = '1' and gmii_rx_er = '0' and gmii_rx_din = C_PREAMBLE_BYTE then
-            gmii_rx_state <= SFD;
-          else
-            gmii_rx_state <= IDLE;
-          end if;
+    if reset = '1' then
+      gmii_rx_state <= IDLE;
+    else
+      if rising_edge(gmii_rx_clk) then
+        case gmii_rx_state is
+          when SFD =>
+            if gmii_rx_dv = '1' and gmii_rx_er = '0' and gmii_rx_din = C_SFD_BYTE then
+              gmii_rx_state <= DATA;
+              sof           <= '1';
+            elsif gmii_rx_dv = '1' and gmii_rx_er = '0' and gmii_rx_din = C_PREAMBLE_BYTE then
+              gmii_rx_state <= SFD;
+            else
+              gmii_rx_state <= IDLE;
+            end if;
 
-        when DATA =>
-          if gmii_rx_dv = '1' and gmii_rx_er = '0' then
-            gmii_rx_state <= DATA;
-            valid         <= '1';
-            rx_data       <= gmii_rx_din;
-          else
-            gmii_rx_state <= IDLE;
-            eof           <= '1';
-          end if;
+          when DATA =>
+            if gmii_rx_dv = '1' and gmii_rx_er = '0' then
+              gmii_rx_state <= DATA;
+              valid         <= '1';
+              rx_data       <= gmii_rx_din;
+            else
+              gmii_rx_state <= IDLE;
+              eof           <= '1';
+            end if;
 
-        when others => -- IDLE --
-          if (gmii_rx_dv = '1' and gmii_rx_er = '0' and
-            gmii_rx_din = C_PREAMBLE_BYTE and fifo_full = '0') then
-            gmii_rx_state <= SFD;
-          else
-            gmii_rx_state <= IDLE;
-          end if;
-      end case;
+          when others => -- IDLE --
+            if (gmii_rx_dv = '1' and gmii_rx_er = '0' and
+              gmii_rx_din = C_PREAMBLE_BYTE and fifo_full = '0') then
+              gmii_rx_state <= SFD;
+            else
+              gmii_rx_state <= IDLE;
+            end if;
+        end case;
+      end if;
     end if;
   end process gmii_rx_fsm;
 
@@ -167,13 +178,17 @@ begin
   fifo_din <= sof & eof & valid & rx_data;
   fifo_wr  <= sof or eof or valid;
 
-  -- power-on reset for the FIFO --
-  fifo_power_on_rst_proc : process (gmii_rx_clk) is
+  -- reset for the FIFO --
+  fifo_rst_proc : process (gmii_rx_clk, reset) is
   begin
-    if rising_edge(gmii_rx_clk) then
-      fifo_rst <= '0' & fifo_rst(fifo_rst'left downto 1);
+    if reset = '1' then
+      fifo_rst <= (others => '1');
+    else
+      if rising_edge(gmii_rx_clk) then
+        fifo_rst <= '0' & fifo_rst(fifo_rst'left downto 1);
+      end if;
     end if;
-  end process fifo_power_on_rst_proc;
+  end process fifo_rst_proc;
 
   gmii_rx_fifo : xpm_fifo_async
   generic map(
