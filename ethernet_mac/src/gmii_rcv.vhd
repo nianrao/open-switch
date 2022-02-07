@@ -125,46 +125,48 @@ begin
   -- GMII receving state machine --
   gmii_rx_fsm : process (gmii_rx_clk, reset) is
   begin
-    -- initialize signals --
-    sof     <= '0';
-    eof     <= '0';
-    valid   <= '0';
-    rx_data <= (others => '0');
-
     if reset = '1' then
+      sof           <= '0';
+      eof           <= '0';
+      valid         <= '0';
+      rx_data       <= (others => '0');
       gmii_rx_state <= IDLE;
-    else
-      if rising_edge(gmii_rx_clk) then
-        case gmii_rx_state is
-          when SFD =>
-            if gmii_rx_dv = '1' and gmii_rx_er = '0' and gmii_rx_din = C_SFD_BYTE then
-              gmii_rx_state <= DATA;
-              sof           <= '1';
-            elsif gmii_rx_dv = '1' and gmii_rx_er = '0' and gmii_rx_din = C_PREAMBLE_BYTE then
-              gmii_rx_state <= SFD;
-            else
-              gmii_rx_state <= IDLE;
-            end if;
+    elsif rising_edge(gmii_rx_clk) then
+      -- initialize signals --
+      sof     <= '0';
+      eof     <= '0';
+      valid   <= '0';
+      rx_data <= (others => '0');
 
-          when DATA =>
-            if gmii_rx_dv = '1' and gmii_rx_er = '0' then
-              gmii_rx_state <= DATA;
-              valid         <= '1';
-              rx_data       <= gmii_rx_din;
-            else
-              gmii_rx_state <= IDLE;
-              eof           <= '1';
-            end if;
+      case gmii_rx_state is
+        when SFD =>
+          if gmii_rx_dv = '1' and gmii_rx_er = '0' and gmii_rx_din = SFD_BYTE then
+            gmii_rx_state <= DATA;
+            sof           <= '1';
+          elsif gmii_rx_dv = '1' and gmii_rx_er = '0' and gmii_rx_din = PREAMBLE_BYTE then
+            gmii_rx_state <= SFD;
+          else
+            gmii_rx_state <= IDLE;
+          end if;
 
-          when others => -- IDLE --
-            if (gmii_rx_dv = '1' and gmii_rx_er = '0' and
-              gmii_rx_din = C_PREAMBLE_BYTE and fifo_full = '0') then
-              gmii_rx_state <= SFD;
-            else
-              gmii_rx_state <= IDLE;
-            end if;
-        end case;
-      end if;
+        when DATA =>
+          if gmii_rx_dv = '1' and gmii_rx_er = '0' then
+            gmii_rx_state <= DATA;
+            valid         <= '1';
+            rx_data       <= gmii_rx_din;
+          else
+            gmii_rx_state <= IDLE;
+            eof           <= '1';
+          end if;
+
+        when others => -- IDLE --
+          if (gmii_rx_dv = '1' and gmii_rx_er = '0' and
+            gmii_rx_din = PREAMBLE_BYTE and fifo_full = '0') then
+            gmii_rx_state <= SFD;
+          else
+            gmii_rx_state <= IDLE;
+          end if;
+      end case;
     end if;
   end process gmii_rx_fsm;
 
@@ -183,10 +185,8 @@ begin
   begin
     if reset = '1' then
       fifo_rst <= (others => '1');
-    else
-      if rising_edge(gmii_rx_clk) then
-        fifo_rst <= '0' & fifo_rst(fifo_rst'left downto 1);
-      end if;
+    elsif rising_edge(gmii_rx_clk) then
+      fifo_rst <= '0' & fifo_rst(fifo_rst'left downto 1);
     end if;
   end process fifo_rst_proc;
 
@@ -241,9 +241,15 @@ begin
     wr_en         => fifo_wr
   );
 
-  fifo_rd_proc : process (lcl_clk) is
+  fifo_rd_proc : process (lcl_clk, reset) is
   begin
-    if rising_edge(lcl_clk) then
+    if reset = '1' then
+      fifo_rd   <= '0';
+      sof_out   <= '0';
+      eof_out   <= '0';
+      valid_out <= '0';
+      data_out  <= (others => '0');
+    elsif rising_edge(lcl_clk) then
       -- initialize --
       fifo_rd   <= '0';
       sof_out   <= '0';
