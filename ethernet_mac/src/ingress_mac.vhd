@@ -14,7 +14,7 @@
 --      total frames (including valid and invalid frames)
 --      bad CRC frames
 --      under-sized frames (size < 64-byte but good CRC)
---      over-sized frames (size > MRU byte but good CRC)
+--      over-sized frames (size > MTU byte but good CRC)
 --      valid frames (valid size, good CRC):
 --        broadcast frames
 --        multicast frames
@@ -93,8 +93,7 @@ entity ingress_mac is
     data_in  : in std_logic_vector(7 downto 0);
 
     -- configurations --
-    vlan_aware : in std_logic                     := '0';
-    mru        : in std_logic_vector(10 downto 0) := std_logic_vector(to_unsigned(MRU, 11));
+    vlan_aware : in std_logic := '0';
 
     -- outgoing data stream --
     sof_out   : out std_logic                      := '0';
