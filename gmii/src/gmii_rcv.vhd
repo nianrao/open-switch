@@ -77,6 +77,9 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.math_real.all;
 
+library work;
+use work.ethernet_pkg.all;
+
 library xpm;
 use xpm.vcomponents.all;
 
@@ -100,9 +103,6 @@ entity gmii_rcv is
 end entity gmii_rcv;
 
 architecture rtl of gmii_rcv is
-  constant C_PREAMBLE_BYTE : std_logic_vector(7 downto 0) := x"AA";
-  constant C_SFD_BYTE      : std_logic_vector(7 downto 0) := x"D5";
-
   type type_gmii_rx_state is (IDLE, SFD, DATA);
   signal gmii_rx_state : type_gmii_rx_state := IDLE;
 
