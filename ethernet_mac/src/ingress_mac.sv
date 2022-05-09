@@ -80,29 +80,28 @@
 
 import ethernet_pkg::*;
 
-module ingress_mac
-(
-  input wire reset   ,
-  input wire lcl_clk ,
+module ingress_mac (
+    input wire reset,
+    input wire lcl_clk,
 
-  // incoming data stream
-  input wire sof_in   ,
-  input wire eof_in   ,
-  input wire valid_in ,
-  input wire [7:0] data_in  ,
+    // incoming data stream
+    input wire sof_in   ,
+    input wire eof_in   ,
+    input wire valid_in ,
+    input wire [7:0] data_in  ,
 
-  // configurations
-  input wire vlan_aware ,
+    // configurations
+    input wire vlan_aware,
 
-  // outgoing data stream
-  output logic sof_out   ,
-  output logic eof_out   ,
-  output logic valid_out ,
-  output logic [127:0] data_out
+    // outgoing data stream
+    output logic sof_out   ,
+    output logic eof_out   ,
+    output logic valid_out ,
+    output logic [127:0] data_out
 );
 
 endmodule
 
 `default_nettype wire
 
-`endif // INGRESS_MAC
+`endif  // INGRESS_MAC
