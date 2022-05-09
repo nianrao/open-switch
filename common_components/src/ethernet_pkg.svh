@@ -20,7 +20,8 @@ package ethernet_pkg;
 
   // MAC address related
   parameter N_OF_BYTE_MAC = 6;
-  parameter [N_OF_BYTE_MAC * 8 - 1:0] BCAST_MAC = '1;
+  parameter N_OF_BIT_MAC = N_OF_BYTE_MAC * 8;
+  parameter [N_OF_BIT_MAC - 1:0] BCAST_MAC = '1;
 
   // 802.1q VLAN related
   parameter [15:0] C_VLAN_TPID = 16'h8100;  // C-TAG
