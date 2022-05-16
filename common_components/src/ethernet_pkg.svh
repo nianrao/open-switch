@@ -21,16 +21,22 @@ package ethernet_pkg;
   // MAC address related
   parameter N_OF_BYTE_MAC = 6;
   parameter N_OF_BIT_MAC = N_OF_BYTE_MAC * 8;
-  parameter [N_OF_BIT_MAC - 1:0] BCAST_MAC = '1;
+  parameter [(N_OF_BIT_MAC - 1):0] BCAST_MAC = '1;
 
   // 802.1q VLAN related
+  parameter N_OF_BYTE_TPID = 2;
   parameter [15:0] C_VLAN_TPID = 16'h8100;  // C-TAG
   parameter [15:0] S_VLAN_TPID = 16'h88A8;  // S-TAG
+
+  parameter N_OF_BYTE_QTAG = 2;
   parameter VLAN_ID_MAX = 4095;  // max value of VLAN ID
   parameter VLAN_ID_BIT_WIDTH = $clog2(VLAN_ID_MAX);
+  parameter [(VLAN_ID_BIT_WIDTH-1):0] DEFAULT_QTAG_ID = 1;
+
   parameter VLAN_PRIORITY_MAX = 7;  // max value of VLAN priority
   parameter VLAN_PRIORITY_BIT_WIDTH = $clog2(VLAN_PRIORITY_MAX);
-  parameter N_OF_BYTE_QTAG = 4;
+  parameter [(VLAN_PRIORITY_BIT_WIDTH-1):0] DEFAULT_QTAG_PRIORITY = 0;
+
   parameter LEVEL_OF_QTAG = 2;  // levels of Q-in-Q
 
   // Ethertype related
@@ -41,10 +47,12 @@ package ethernet_pkg;
 
   // Frame size related
   parameter MTU = 1500;  // in unit of bytes
+  // min size of frame in unit of byte:
+  parameter N_OF_BYTE_FRAME_MIN  = 64;
   // maximum size of frame in unit of byte:
   //   DMAC + SMAC + QTAG + Ethertype + payload + FCS
   parameter N_OF_BYTE_FRAME_MAX  = 2 * N_OF_BYTE_MAC +
-                                   LEVEL_OF_QTAG * N_OF_BYTE_QTAG +
+                                   LEVEL_OF_QTAG * (N_OF_BYTE_QTAG + N_OF_BYTE_TPID) +
                                    N_OF_BYTE_ETHERTYPE +
                                    MTU +
                                    N_OF_BYTE_FCS;
